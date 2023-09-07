@@ -207,7 +207,7 @@ defmodule Sourceror.Range do
   # Stabs
   # a -> b
   defp do_get_range({:->, _, [left_args, right]}) do
-    start_pos = get_range(left_args).start
+    start_pos = get_range(if(left_args == [], do: right, else: left_args)).start
     end_pos = get_range(right).end
 
     %{start: start_pos, end: end_pos}
@@ -332,6 +332,13 @@ defmodule Sourceror.Range do
       _ ->
         get_range_for_unqualified_call(quoted)
     end
+  end
+
+  # Anonymous functions
+  defp do_get_range({:fn, meta, args} = quoted) do
+    start_pos = Keyword.take(meta, [:line, :column])
+    end_pos = get_range(List.last(args)).end
+    %{start: start_pos, end: Keyword.update!(end_pos, :column, &(&1 + 4))}
   end
 
   # Unqualified calls
